@@ -169,12 +169,19 @@ if __name__ == '__main__':
             logger.warning(err_msg)
             exit(1)
 
+        work = []
+        for t in targets:
+            apps = args.app_shortlist
+            if not apps:
+                apps = [x[0] for x in t.apps()]
+            work.append((t, apps))
+
         logger.info('Found {} Targets to assemble image for'.format(found_targets_number))
-        for target in targets:
-            logger.info('Assembling image for {}, shortlist: {}'.format(target.name, args.app_shortlist))
+        for target, apps in work:
+            logger.info('Assembling image for {}, shortlist: {}'.format(target.name, apps))
             image_file_path = factory_client.get_target_system_image(target, args.out_image_dir)
             copy_container_images_to_wic(target, args.app_image_dir, args.preload_dir,
-                                         image_file_path, args.token, args.app_shortlist)
+                                         image_file_path, args.token, apps)
             archive_and_output_assembled_wic(image_file_path, args.out_image_dir)
     except Exception as exc:
         logger.error('Failed to assemble a system image: {}'.format(exc))
