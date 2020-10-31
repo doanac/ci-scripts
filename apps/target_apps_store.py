@@ -37,11 +37,17 @@ class ArchiveTargetAppsStore(TargetAppsStore):
     def __init__(self, root_dir):
         self._root_dir = root_dir
 
-    def store(self, target: FactoryClient.Target, images_dir: str):
+    def store(self, target: FactoryClient.Target, images_dir: str, apps_dir: str):
         arch_dir, app_image_tar, app_image_size_file = self.apps_location(target)
         os.makedirs(arch_dir, exist_ok=True)
         subprocess.check_call(['tar', '-cf', app_image_tar, '-C', images_dir, '.'])
         image_data_size = subprocess.check_output(['du', '-sk', images_dir]).split()[0].decode('utf-8')
+        with open(app_image_size_file, 'w') as f:
+            f.write(image_data_size)
+
+        subprocess.check_call(['tar', '--append', '-f', app_image_tar, '-C', apps_dir, '--transform', 's,^\\.,apps,', '.'])
+        image_data_size = subprocess.check_output(['du', '-sk', images_dir]).split()[0].decode('utf-8')
+        image_data_size += subprocess.check_output(['du', '-sk', apps_dir]).split()[0].decode('utf-8')
         with open(app_image_size_file, 'w') as f:
             f.write(image_data_size)
 
@@ -70,19 +76,20 @@ class ArchiveTargetAppsStore(TargetAppsStore):
 
         return app_image_size
 
-    def copy(self, target: FactoryClient.Target, dst_dir: str):
+    def copy(self, target: FactoryClient.Target, images_dir: str, apps_dir: str):
         _, app_image_tar, _ = self.apps_location(target)
 
-        if os.path.exists(dst_dir):
+        if os.path.exists(images_dir):
             # wic image was populated by container images data during LmP build
             # let's remove it and populate with the given images data
             logger.info('Removing existing preloaded app images from the system image')
-            shutil.rmtree(dst_dir)
+            shutil.rmtree(images_dir)
 
-        os.makedirs(dst_dir)
+        os.makedirs(images_dir)
         logger.info('Copying container images of Target Apps; Target: {}, Source: {}, Destination: {}'
-                    .format(target.name, app_image_tar, dst_dir))
-        subprocess.check_call(['tar', '-xf', app_image_tar, '-C', dst_dir])
+                    .format(target.name, app_image_tar, images_dir))
+        subprocess.check_call(['tar', '-xf', app_image_tar, '-C', images_dir])
+        os.rename(os.path.join(images_dir, 'apps'), apps_dir)
 
     def apps_location(self, target: FactoryClient.Target):
         arch_dir = os.path.join(self._root_dir, target.sha)

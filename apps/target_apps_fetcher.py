@@ -46,11 +46,8 @@ class TargetAppsFetcher:
         self._registry_client.login()
         for target, apps in self.target_apps.items():
             dname = self.images_dir(target.name)
-            logger.info('ANDY Fetching app images to %s', dname)
             if not os.path.exists(dname):
                 self.__download_apps_images(apps, dname, target.platform, graphdriver)
-            else:
-                logger.info('ANDY Fetching app images exists: %s', dname)
 
     @staticmethod
     def __download_apps_images(apps: ComposeApps, app_images_dir, platform, graphdriver='overlay2'):

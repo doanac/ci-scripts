@@ -29,6 +29,8 @@ fi
 export PYTHONPATH=${HERE}
 status Running: Assemble System Image script
 
+apk add tar
+
 /usr/local/bin/dind "${HERE}/assemble.py" \
   --factory "${FACTORY}" \
   --token "$(cat "${SECRETS}/osftok")" \
@@ -38,4 +40,4 @@ status Running: Assemble System Image script
   --preload-dir "${PRELOAD_DIR}" \
   --targets "${TARGETS}" \
   --app-shortlist="${APP_SHORTLIST}" \
-  2>&1 | indent
+  2>&1
