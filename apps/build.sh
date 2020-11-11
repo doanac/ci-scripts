@@ -214,6 +214,12 @@ for x in $IMAGES ; do
 
 		if run docker manifest create ${ct_base}:$TAG $manifest_args ; then
 			run docker manifest create ${ct_base}:$LATEST $manifest_args
+			var="EXTRA_TAGS_$ARCH"
+			for t in $(eval echo "\$$var") ; do
+				status "Setting arch of $t for docker-manifest"
+				run docker manifest annotate ${ct_base}:$TAG ${ct_base}:$TAG-$t --arch $t
+				run docker manifest annotate ${ct_base}:$LATEST ${ct_base}:$TAG-$t --arch $t
+			done
 			run docker manifest push ${ct_base}:$TAG
 			run docker manifest push ${ct_base}:$LATEST
 		else
