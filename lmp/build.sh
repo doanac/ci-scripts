@@ -38,6 +38,11 @@ cache="/var/cache/bitbake/sstate-cache-${DISTRO}"
 [ -d $cache ] || (mkdir $cache; chown builder $cache)
 ln -s $cache sstate-cache
 
+# cache seems to not support concurrent builds. We build one machine at a time:
+cache="/var/cache/bitbake/cache-${MACHINE}"
+[ -d $cache ] || (mkdir $cache; chown builder $cache)
+ln -s $cache build/cache
+
 chown -R builder .
 
 su builder -c $HERE/bb-config.sh
