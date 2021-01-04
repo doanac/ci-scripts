@@ -79,8 +79,8 @@ if __name__ == '__main__':
         exit_code = main(args.factory, args.git_sha, args.targets, machines, platforms,
                          args.apps_root_dir, args.publish_tool, args.apps_version, args.target_tag,
                          args.target_version, args.new_targets_file)
-    except Exception as exc:
-        logging.error('Failed to publish apps: {}'.format(exc))
+    except Exception:
+        logging.exception('Failed to publish apps')
         exit_code = 1
 
     exit(exit_code)
