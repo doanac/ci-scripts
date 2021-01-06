@@ -4,6 +4,9 @@ HERE=$(dirname $(readlink -f $0))
 source $HERE/../helpers.sh
 require_params MACHINE IMAGE GIT_SHA
 
+status "ANDY hacking hosts to publish through staging"
+echo "35.222.247.102 api.foundries.io" >> /etc/hosts
+
 DISTRO="${DISTRO-lmp}"
 
 if [[ $GIT_URL == *"/lmp-manifest.git"* ]]; then
