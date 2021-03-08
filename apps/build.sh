@@ -231,5 +231,7 @@ for x in $IMAGES ; do
 		fi
 		echo "</testcase>" >> /archive/junit.xml
 	fi
+
+	run ${HERE}/archive_packages.py --append ${ct_base}:$TAG-$ARCH /archive/packages.json
 	echo "Build step $((completed+3)) of $total is complete"
 done
