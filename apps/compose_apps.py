@@ -61,6 +61,8 @@ class ComposeApps:
         def save(self):
             with open(self.file, 'w') as compose_file:
                 yaml.dump(self._desc, compose_file)
+            with open("/archive/andy.yml", 'w') as compose_file:
+                yaml.dump(self._desc, compose_file)
 
         def _run_cmd(self, cmd):
             cmd_exe(self.DockerComposeTool, '-f', self.file, cmd)
