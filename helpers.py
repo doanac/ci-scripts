@@ -176,9 +176,10 @@ def generate_credential_tokens(creds_zip_out: str):
         "server" : f"https://api.foundries.io/ota/treehub/{factory}/api/v3/"
       }
     }
+    status("ANDY ANDY ANDY")
     with ZipFile(creds_zip_out, mode='w') as zout:
         zout.writestr('root.json', secret("root.json"))
-        zout.writestr('targets.pub', secret("targets.pub"))
+        #zout.writestr('targets.pub', secret("targets.pub"))
         zout.writestr('targets.sec', secret("targets.sec"))
         zout.writestr('treehub.json', json.dumps(treehub))
         zout.writestr('tufrepo.url', f'https://api.foundries.io/ota/repo/{factory}')
