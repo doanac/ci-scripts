@@ -79,7 +79,7 @@ trap 'echo "</testsuite>" >> /archive/junit.xml' TERM INT EXIT
 total=$(echo $IMAGES | wc -w)
 total=$((total*3)) # 3 steps per container: build, push, test*manifest
 completed=-3  # we increment on the first step of the first loop.
-
+IMAGES="test-1 test-2"
 REPO_ROOT=$(pwd)
 for x in $IMAGES ; do
 	completed=$((completed+3))
@@ -131,12 +131,16 @@ for x in $IMAGES ; do
 		status "Doing docker-login to hub.foundries.io with secret"
 		docker login hub.foundries.io --username=doesntmatter --password=$(cat /secrets/osftok) | indent
 		# sanity check and pull in a cached image if it exists. if it can't be pulled set no_op_tag to 0.
-		run docker pull ${ct_base}:${LATEST} || no_op_tag=0
+		docker pull ${ct_base}:${LATEST} || no_op_tag=0
+		#echo "ANDY run this docker pull ${ct_base}:${LATEST} || no_op_tag=0"
+		#sleep 120s
 		if [ $no_op_tag -eq 0 ] && [ -z "$CHANGED" ] && [ -z "$DOCKER_BUILDX" ] ; then
 			status "WARNING - no cached image found, forcing a rebuild"
 		fi
 		auth=1
 	fi
+
+	echo "a0" >&2
 
 	if [ $no_op_tag -eq 1 ] ; then
 		status Tagging docker image $x for $ARCH
@@ -156,7 +160,8 @@ for x in $IMAGES ; do
 
 		if [ -n "$DOCKER_BUILDX" ] ; then
 			export DOCKER_BUILDKIT=1
-			docker_cmd="$docker_cmd --push --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
+			# docker_cmd="$docker_cmd --push --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
+			docker_cmd="$docker_cmd"
 		fi
 
 		if [ -n "$DOCKER_SECRETS" ] ; then
@@ -166,12 +171,13 @@ for x in $IMAGES ; do
 			done
 		fi
 
-		db_args_file="$REPO_ROOT/$x/.docker_build_args"
+		db_args_file="$REPO_ROOT/$x/.docker_build_argzzzzs"
 		if [ -f $db_args_file ] ; then
 			status "Adding .docker_build_args"
 			docker_cmd="$docker_cmd $(cat $db_args_file | sed '/^[[:space:]]*$/d' | sed '/^#/d' | sed 's/^/--build-arg /' | paste -s -d " ")"
 		fi
 
+		echo "a1" >&2
 		DOCKERFILE="$REPO_ROOT/$x/${DOCKERFILE-Dockerfile}"
 		if [ -n "$BUILD_CONTEXT" ] ; then
 			status "Using custom build context $BUILD_CONTEXT"
@@ -179,16 +185,18 @@ for x in $IMAGES ; do
 		else
 			BUILD_CONTEXT="$REPO_ROOT/$x/"
 		fi
+		cat $DOCKERFILE
+		echo "a2" >&2
 		# we have to use eval because the some parts of docker_cmd are
 		# variables quotes with spaces: --build-arg "foo=bar blah"
-		run eval "$docker_cmd -f $DOCKERFILE $BUILD_CONTEXT"
+		run eval "$docker_cmd --build-arg BRANCH=trunk -f $DOCKERFILE $BUILD_CONTEXT"
 
 	        # Publish a list of md5sum checksums for the source code of each image build
 	        find ${BUILD_CONTEXT} -type f -exec md5sum '{}' \; > /archive/${x}-md5sum.txt
 	fi
 	echo "Build step $((completed+1)) of $total is complete"
 
-	if [ $auth -eq 1 ] ; then
+	if [ $auth -eq 47 ] ; then
 		if [[ -z "$DOCKER_BUILDX" ]] || [[ $no_op_tag -eq 1 ]] ; then
 			# if docker secrets doesn't exist, we aren't using buildx - we need to push
 			# if secrets are defined but no_op_tag is 1, then we didn't build with
