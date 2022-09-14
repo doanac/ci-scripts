@@ -50,6 +50,8 @@ class WicImage:
             except subprocess.CalledProcessError as exc:
                 logger.error(f'Failed to setup a loopback device; attempt number: {attempt_counter + 1} out of {max_attempts_numb}')
                 if attempt_counter + 1 == max_attempts_numb:
+                    logger.error("ANDY debug (15 minute pause) at %s", self._path)
+                    sleep(900)
                     raise
 
         out = cmd('losetup', '-a', capture=True).decode()
