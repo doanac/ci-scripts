@@ -66,6 +66,15 @@ def publish_manifest_lists(project: str = "", build_num: str = "", ota_lite_tag:
                 except FileExistsError:
                     pass
                 with open(path, "w") as f:
+                    # We have users build a 32-bit arm container and tag it
+                    # for arm64. They way our build.sh will work, the manifest
+                    # will have v7 for the variant and not v8 as required for
+                    # arm64. Detect and fix this:
+                    arch = mf["Descriptor"]["platform"]["architecture"]
+                    variant = mf["Descriptor"]["platform"].get("variant")
+                    if arch == "arm64" and variant != "v8":
+                        status(" Fixing platfor.variant value for arm64 image")
+                        mf["Descriptor"]["platform"]["variant"] = "v8"
                     json.dump(mf, f)
 
     for tag in tags.keys():
