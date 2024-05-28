@@ -17,10 +17,15 @@ HERE=$(dirname $(readlink -f $0))
 require_params FACTORY
 
 export DOCKER_BUILDKIT=1
-BUILDKIT_VERSION="${BUILDKIT_VERSION-v0.10.3}"
+BUILDKIT_VERSION="${BUILDKIT_VERSION-v0.13.2}"
 
 MANIFEST_PLATFORMS_DEFAULT="${MANIFEST_PLATFORMS_DEFAULT-linux/amd64,linux/arm,linux/arm64}"
 status Default container platforms will be: $MANIFEST_PLATFORMS_DEFAULT
+
+run apk add curl
+curl -L https://github.com/docker/buildx/releases/download/v0.14.1/buildx-v0.14.1.linux-amd64 > /docker-buildx
+chmod +x /docker-buildx
+mv /docker-buildx /usr/local/lib/docker/cli-plugins/
 
 load_extra_certs
 if [ -f /secrets/docker_host_config.json ] ; then
@@ -80,6 +85,8 @@ fi
 
 trap '[ -f /archive/junit.xml ] && echo "</testsuite>" >> /archive/junit.xml' TERM INT EXIT
 
+run docker buildx version
+
 total=$(echo $IMAGES | wc -w)
 total=$((total*3)) # 3 steps per container: build, push, test*manifest
 completed=-3  # we increment on the first step of the first loop.
@@ -127,7 +134,7 @@ for x in $IMAGES ; do
 		docker_cmd="$docker_cmd  --no-cache"
 	fi
 
-	docker_cmd="$docker_cmd --push --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
+	docker_cmd="$docker_cmd --output=type=registry,oci-mediatypes=false --provenance=false --load --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
 
 	if [ -n "$DOCKER_SECRETS" ] ; then
 		status "DOCKER_SECRETS defined - building --secrets for $(ls /secrets)"
@@ -179,6 +186,7 @@ for x in $IMAGES ; do
 		status "Doing a Syft SBOM scan"
 		sbom_dst=/archive/sboms/${ct_base}/${ARCH}.spdx.json
 		mkdir -p $(dirname $sbom_dst)
+		run docker images
 		syft ${ct_base}:$TAG-$ARCH -o spdx-json > $sbom_dst
 	else
 		status "Skipping SBOM generation: DISABLE_SBOM enabled"
